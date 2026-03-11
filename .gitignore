@@ -1,0 +1,13 @@
+# Data files
+data/
+*.parquet
+*.csv
+
+# Environments
+*.env
+hadoop.env
+
+# System files
+__pycache__/
+*.pyc
+.DS_Store
