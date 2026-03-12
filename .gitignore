@@ -2,6 +2,10 @@
 data/
 *.parquet
 *.csv
+*.duckdb
+*.duckdb.wal
+nyc_taxi_dbt/logs/
+nyc_taxi_dbt/target/
 
 # Environments
 *.env
