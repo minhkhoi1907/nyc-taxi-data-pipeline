@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: fact_trip
+    description: "Central fact table storing all NYC taxi trips"
+    columns:
+      - name: trip_id
+        tests:
+          - unique
+          - not_null
+      - name: vendor_id
+        tests:
+          - not_null
+      - name: fare_amount
+        tests:
+          - not_null
+
+  - name: dim_date
+    description: "Date dimension"
+    columns:
+      - name: date_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_time
+    description: "Time dimension at minute grain"
+    columns:
+      - name: time_id
+        tests:
+          - unique
+          - not_null
+
+  - name: mart_trip_demand
+    description: "Analyzes trip demand patterns by time and location (Req 1)"
+  
+  - name: mart_revenue_analysis
+    description: "Analyzes revenue, fares, and tips by location and payment type (Req 2)"
+
+  - name: mart_traffic_efficiency
+    description: "Analyzes trip speeds and distance to identify congestion (Req 3)"
+
+  - name: mart_customer_segmentation
+    description: "Analyzes passenger group sizes and payment preferences (Req 4)"
