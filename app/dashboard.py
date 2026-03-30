@@ -18,7 +18,7 @@ DB_PATH = os.path.join(ROOT_DIR, "dev.duckdb")
 @st.cache_resource
 def get_connection():
     if not os.path.exists(DB_PATH):
-        st.error(f"❌ Không tìm thấy database tại {DB_PATH}. Hãy chạy pipeline trước!")
+        st.error(f" Không tìm thấy database tại {DB_PATH}. Hãy chạy pipeline trước!")
         st.stop()
     # Read-only mode để an toàn khi dev dbt đồng thời
     return duckdb.connect(DB_PATH, read_only=True)
