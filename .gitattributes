@@ -1,0 +1,6 @@
+# Force GitHub Linguist to detect SQL files (dbt models)
+*.sql linguist-detectable=true
+*.sql linguist-language=SQL
+
+# Force YAML files to be detected
+*.yml linguist-detectable=true
