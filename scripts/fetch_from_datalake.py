@@ -2,7 +2,7 @@ import os
 import subprocess
 
 def fetch_data_from_hdfs():
-    hdfs_dir = "/raw/nyc_taxi"
+    hdfs_dir = "/nyc_taxi/processed/yellow_tripdata.parquet"
     local_data_dir = "data"
     os.makedirs(local_data_dir, exist_ok=True)
     try:

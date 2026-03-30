@@ -16,29 +16,29 @@ def main():
     
     print("=== BẮT ĐẦU NYC TAXI PIPELINE ===")
     
-    # 1. (Tuỳ chọn) Chạy script HDFS fetch - giả sử data đã ở đúng chỗ
+    # 1. Chạy Spark Processing
+    print("\n1️⃣ Đang chạy Spark Processing job (HDFS -> Spark -> HDFS)...")
+    run_command(["docker", "exec", "spark-master", "spark-submit", "/scripts/spark_process.py"])
+    
+    # 2. Kéo Parquet data về Local cho DuckDB
     fetch_script = os.path.join(root_dir, "scripts", "fetch_from_datalake.py")
     if os.path.exists(fetch_script):
-        print("\n1️⃣ Đang tải data từ Data Lake (HDFS)...")
-        # subprocess.run(["python", fetch_script]) # Bỏ comment khi HDFS cluster đang chạy
-        print("⏭️ Dữ liệu đã sẵn sàng.")
+        print("\n2️⃣ Đang tải Parquet data từ HDFS về Local...")
+        run_command(["python", fetch_script])
         
-    # 2. Tải lookup files (taxi_zone_lookup.csv)
-    print("\n2️⃣ Đang nạp Seed/Lookup Data...")
+    # 3. Tải lookup files (taxi_zone_lookup.csv)
+    print("\n3️⃣ Đang nạp Seed/Lookup Data...")
     download_zones_script = os.path.join(root_dir, "scripts", "download_taxi_zones.py")
     if os.path.exists(download_zones_script):
         run_command(["python", download_zones_script])
         
-    # 3. Chạy DBT Build
-    print("\n3️⃣ Đang xây dựng Data Warehouse Models bằng dbt...")
-    # dbt seed (dành cho file csv nếu có thêm vào seeds)
+    # 4. Chạy DBT Build
+    print("\n4️⃣ Đang xây dựng Data Warehouse Models bằng dbt...")
     run_command(["dbt", "seed"], cwd=dbt_dir)
-    
-    # dbt run
     run_command(["dbt", "run"], cwd=dbt_dir)
     
-    # dbt test
-    print("\n4️⃣ Chạy Data Quality Tests...")
+    # 5. Chạy DBT Test
+    print("\n5️⃣ Chạy Data Quality Tests...")
     run_command(["dbt", "test"], cwd=dbt_dir)
 
     print("\n✅ PIPELINE CHẠY THÀNH CÔNG! Báo cáo (Marts) đã sẵn sàng.")
