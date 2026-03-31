@@ -3,7 +3,6 @@
 WITH date_spine AS (
     SELECT unnest(generate_series(DATE '2020-01-01', DATE '2030-12-31', INTERVAL 1 DAY)) AS raw_date
 )
-
 SELECT
     -- Date ID format YYYYMMDD
     strftime(raw_date, '%Y%m%d')::INT AS date_id,
@@ -19,3 +18,6 @@ SELECT
         ELSE false 
     END AS is_weekend
 FROM date_spine
+
+
+
