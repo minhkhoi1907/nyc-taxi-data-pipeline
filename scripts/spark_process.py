@@ -2,8 +2,9 @@ import sys
 import argparse
 import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, lit
+from pyspark.sql.functions import col, to_timestamp, lit, unix_timestamp, round
 from pyspark.sql.types import IntegerType
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -55,7 +56,14 @@ def main(year, month):
 
         clean_df = df.withColumn("tpep_pickup_datetime", to_timestamp(col("tpep_pickup_datetime"))) \
                      .withColumn("tpep_dropoff_datetime", to_timestamp(col("tpep_dropoff_datetime"))) \
-                     .filter(col("total_amount") > 0)
+                     .withColumn("trip_duration", round((unix_timestamp(col("tpep_dropoff_datetime")) - unix_timestamp(col("tpep_pickup_datetime"))) / 60.0, 2)) \
+                     .filter(
+                         (col("total_amount") > 0) &
+                         (col("trip_distance") > 0) & 
+                         (col("trip_distance") < 200) &  # Chặn cuốc xe dài vô lý
+                         (col("trip_duration") > 0) &    # Chặn thời gian âm hoặc bằng 0
+                         (col("trip_duration") < 1440)   # Chặn cuốc xe dài hơn 24 tiếng
+                     )
 
         logging.info(f"Writing Parquet data to: {output_path}")
         clean_df.write \

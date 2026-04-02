@@ -26,7 +26,7 @@ def main(year, month):
         run_command(["python", extract_script, "--year", str(year), "--month", str(month)])
     
     logging.info("Step 1: Invoking Spark Job (Processing & Schema Evolution)")
-    run_command(["docker", "exec", "spark-master", "spark-submit", "/scripts/spark_process.py", "--year", str(year), "--month", str(month)])
+    run_command(["docker", "exec", "spark-master", "/spark/bin/spark-submit", "/scripts/spark_process.py", "--year", str(year), "--month", str(month)])
     
     fetch_script = os.path.join(root_dir, "scripts", "fetch_from_datalake.py")
     if os.path.exists(fetch_script):
