@@ -5,10 +5,8 @@ SELECT
     d.month,
     r.rate_description,
     r.is_airport,
-    p.payment_name,
+    p.payment_name AS payment_type,
     p.is_cash,
-    
-    -- Phân loại độ lớn của nhóm khách
     CASE
         WHEN f.passenger_count = 1 THEN 'Solo (1 pax)'
         WHEN f.passenger_count = 2 THEN 'Couple (2 pax)'
@@ -18,7 +16,9 @@ SELECT
 
     COUNT(f.trip_id) AS total_trips,
     SUM(f.total_amount) AS total_revenue,
-    AVG(f.trip_distance) AS avg_distance
+    AVG(f.trip_distance) AS avg_distance,
+    AVG(f.fare_amount) AS avg_fare_amount, 
+    AVG(f.tip_amount) AS avg_tip_amount    
 FROM {{ ref('fact_trip') }} f
 LEFT JOIN {{ ref('dim_date') }} d ON f.pickup_date_id = d.date_id
 LEFT JOIN {{ ref('dim_ratecode') }} r ON f.ratecode_id = r.ratecode_id

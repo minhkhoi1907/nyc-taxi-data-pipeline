@@ -10,7 +10,7 @@ SELECT
     strftime(raw_date, '%Y') AS year,
     strftime(raw_date, '%m') AS month,
     strftime(raw_date, '%d') AS day,
-    strftime(raw_date, '%q') AS quarter,
+    extract(quarter from raw_date)::VARCHAR AS quarter,
     dayname(raw_date) AS day_of_week,
     week(raw_date)::VARCHAR AS week_of_year,
     CASE 
@@ -18,6 +18,3 @@ SELECT
         ELSE false 
     END AS is_weekend
 FROM date_spine
-
-
-

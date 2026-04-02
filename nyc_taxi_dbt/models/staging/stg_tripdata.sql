@@ -1,59 +1,70 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 WITH raw_taxi_data AS (
     SELECT *
     FROM read_parquet('{{ var("raw_data_path") }}', union_by_name=true)
+),
+
+renamed AS (
+    SELECT 
+        COALESCE(
+            TRY_CAST(VendorID AS VARCHAR),
+            TRY_CAST(vendorid AS VARCHAR)
+        ) AS vendor_id,
+        
+        TRY_CAST(tpep_pickup_datetime AS TIMESTAMP) AS pickup_datetime,
+        TRY_CAST(tpep_dropoff_datetime AS TIMESTAMP) AS dropoff_datetime,
+        
+        TRY_CAST(passenger_count AS DOUBLE) AS passenger_count,
+        TRY_CAST(trip_distance AS DOUBLE) AS trip_distance,
+        
+        COALESCE(
+            TRY_CAST(PULocationID AS INT),
+            TRY_CAST(pulocationid AS INT)
+        ) AS pickup_location_id,
+        
+        COALESCE(
+            TRY_CAST(DOLocationID AS INT),
+            TRY_CAST(dolocationid AS INT)
+        ) AS dropoff_location_id,
+        
+        COALESCE(
+            TRY_CAST(RatecodeID AS INT),
+            TRY_CAST(ratecodeid AS INT)
+        ) AS ratecode_id,
+        
+        TRY_CAST(payment_type AS INT) AS payment_id,
+        
+        TRY_CAST(fare_amount AS DOUBLE) AS fare_amount,
+        
+        COALESCE(TRY_CAST(extra AS DOUBLE), 0) + 
+        COALESCE(TRY_CAST(improvement_surcharge AS DOUBLE), 0) + 
+        COALESCE(TRY_CAST(congestion_surcharge AS DOUBLE), 0) + 
+        COALESCE(TRY_CAST(Airport_fee AS DOUBLE), 0) +
+        COALESCE(TRY_CAST(airport_fee AS DOUBLE), 0) +
+        COALESCE(TRY_CAST(mta_tax AS DOUBLE), 0) AS surcharge,
+        
+        COALESCE(TRY_CAST(mta_tax AS DOUBLE), 0) AS mta_tax,
+        
+        TRY_CAST(tip_amount AS DOUBLE) AS tip_amount,
+        TRY_CAST(tolls_amount AS DOUBLE) AS tolls_amount,
+        TRY_CAST(total_amount AS DOUBLE) AS total_amount
+
+    FROM raw_taxi_data
+
+    -- Apply Data Quality Filters
+    WHERE 
+        pickup_datetime < dropoff_datetime
+        AND (tpep_pickup_datetime IS NOT NULL)
+        AND passenger_count > 0 
+        AND trip_distance >= 0
+        AND fare_amount >= 0
+        AND (pickup_location_id IS NULL OR pickup_location_id BETWEEN 1 AND 265)
+        AND (dropoff_location_id IS NULL OR dropoff_location_id BETWEEN 1 AND 265)
 )
 
-SELECT 
-    -- surrogate key / trip identifier
-    md5(
-        COALESCE(tpep_pickup_datetime::VARCHAR, pickup_datetime::VARCHAR, Trip_Pickup_DateTime::VARCHAR, '') || 
-        COALESCE(tpep_dropoff_datetime::VARCHAR, dropoff_datetime::VARCHAR, Trip_Dropoff_DateTime::VARCHAR, '') || 
-        COALESCE(PULocationID::VARCHAR, '')
-    ) AS trip_id,
-    
-    COALESCE(VendorID, vendor_id, vendor_name::INT) AS vendor_id,
-    
-    COALESCE(tpep_pickup_datetime, pickup_datetime, Trip_Pickup_DateTime) AS pickup_datetime,
-    COALESCE(tpep_dropoff_datetime, dropoff_datetime, Trip_Dropoff_DateTime) AS dropoff_datetime,
-    
-    PULocationID AS pickup_location_id,
-    DOLocationID AS dropoff_location_id,
-    
-    COALESCE(payment_type, Payment_Type) AS payment_id,
-    COALESCE(RatecodeID, RateCodeID) AS ratecode_id,
-    
-    COALESCE(passenger_count, Passenger_Count) AS passenger_count,
-    COALESCE(trip_distance, Trip_Distance) AS trip_distance,
-    
-    -- calculate duration in minutes
-    date_diff('minute', 
-        COALESCE(tpep_pickup_datetime, pickup_datetime, Trip_Pickup_DateTime),
-        COALESCE(tpep_dropoff_datetime, dropoff_datetime, Trip_Dropoff_DateTime)
-    ) AS trip_duration,
-    
-    COALESCE(fare_amount, Fare_Amt) AS fare_amount,
-    COALESCE(extra, 0) + COALESCE(improvement_surcharge, 0) + COALESCE(congestion_surcharge, 0) + COALESCE(Airport_fee, 0) AS surcharge,
-    COALESCE(mta_tax, 0) AS mta_tax,
-    COALESCE(tip_amount, Tip_Amt) AS tip_amount,
-    COALESCE(tolls_amount, Tolls_Amt) AS tolls_amount,
-    COALESCE(total_amount, Total_Amt) AS total_amount
-
-FROM raw_taxi_data
-
--- Apply Data Quality Filters (như feedback của user)
-WHERE 
-    -- 1. Thời gian phải hợp lý (không âm)
-    COALESCE(tpep_pickup_datetime, pickup_datetime, Trip_Pickup_DateTime) < COALESCE(tpep_dropoff_datetime, dropoff_datetime, Trip_Dropoff_DateTime)
-    
-    -- 2. Độ dài chuyến đi và hành khách
-    AND COALESCE(passenger_count, Passenger_Count) > 0 
-    AND COALESCE(trip_distance, Trip_Distance) >= 0
-    
-    -- 3. Cước phí không được âm
-    AND COALESCE(fare_amount, Fare_Amt) >= 0
-    
-    -- 4. Location hợp lệ (Location ID trong khoảng 1-265 theo NYC Taxi format)
-    AND PULocationID BETWEEN 1 AND 265
-    AND DOLocationID BETWEEN 1 AND 265
+SELECT
+    MD5(CONCAT(vendor_id, pickup_datetime::VARCHAR, dropoff_datetime::VARCHAR, pickup_location_id::VARCHAR)) AS trip_id,
+    *,
+    DATE_DIFF('second', pickup_datetime, dropoff_datetime) AS trip_duration
+FROM renamed

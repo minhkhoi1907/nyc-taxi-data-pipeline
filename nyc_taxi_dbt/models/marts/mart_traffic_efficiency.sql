@@ -4,7 +4,7 @@ SELECT
     f.pickup_location_id,
     pu.zone AS pickup_zone,
     f.dropoff_location_id,
-    do.zone AS dropoff_zone,
+    loc_dropoff.zone AS dropoff_zone,
     d.day_of_week,
     t.hour,
     
@@ -27,7 +27,7 @@ SELECT
 
 FROM {{ ref('fact_trip') }} f
 LEFT JOIN {{ ref('dim_location') }} pu ON f.pickup_location_id = pu.location_id
-LEFT JOIN {{ ref('dim_location') }} do ON f.dropoff_location_id = do.location_id
+LEFT JOIN {{ ref('dim_location') }} loc_dropoff ON f.dropoff_location_id = loc_dropoff.location_id
 LEFT JOIN {{ ref('dim_date') }} d ON f.pickup_date_id = d.date_id
 LEFT JOIN {{ ref('dim_time') }} t ON f.pickup_time_id = t.time_id
 GROUP BY 1, 2, 3, 4, 5, 6, 7

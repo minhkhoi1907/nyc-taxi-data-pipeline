@@ -2,7 +2,7 @@
 
 WITH time_spine AS (
     -- generate every minute in a day (1440 rows)
-    SELECT unnest(generate_series(TIMESTAMP '2000-01-01 00:00:00', TIMESTAMP '2000-01-01 23:59:00', INTERVAL 1 MINUTE))::TIME AS raw_time
+    SELECT unnest(generate_series(TIMESTAMP '2000-01-01 00:00:00', TIMESTAMP '2000-01-01 23:59:00', INTERVAL 1 MINUTE)) AS raw_time
 )
 
 SELECT
