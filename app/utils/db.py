@@ -4,7 +4,7 @@ import os
 import logging
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DB_PATH = os.path.join(ROOT_DIR, "dev.duckdb")
+DB_PATH = os.path.join(ROOT_DIR, "nyc_taxi_dbt", "dev.duckdb")
 
 @st.cache_resource
 def get_connection():
