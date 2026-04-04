@@ -37,8 +37,8 @@ if df_kpis is not None and not df_kpis.empty:
     k1.metric("Tổng Doanh thu", f"${r.total_rev:,.0f}")
     k2.metric("Tổng Chuyến đi", f"{r.total_trips:,.0f}")
     
-    rev_mile = r.total_rev/r.total_dist if r.total_dist > 0 else 0
-    k3.metric("Doanh thu/Dặm", f"${rev_mile:.2f}")
+    rev_km = r.total_rev / (r.total_dist * 1.609) if r.total_dist > 0 else 0
+    k3.metric("Doanh thu/KM", f"${rev_km:.2f}")
     
     tip_pct = (r.total_tip/r.total_rev)*100 if r.total_rev > 0 else 0
     k4.metric("Tỷ lệ Tip TB", f"{tip_pct:.1f}%")
@@ -221,38 +221,48 @@ with col_a:
     st.subheader("Tương quan Quãng đường vs Thời gian")
     df_scatter = execute_query("""
         SELECT 
-            avg_distance as "Quãng đường (Miles)", 
+            avg_distance * 1.609 as "Quãng đường (KM)", 
             avg_duration_minutes as "Thời gian (Phút)", 
-            distance_category as "Phân loại"
+            CASE 
+                WHEN avg_distance < 2 THEN 'Ngắn (< 3.2 km)'
+                WHEN avg_distance BETWEEN 2 AND 5 THEN 'Trung bình (3.2-8 km)'
+                ELSE 'Dài (> 8 km)'
+            END as "Phân loại"
         FROM mart_traffic_efficiency
-        WHERE avg_distance > 0 AND avg_distance < 50 AND avg_duration_minutes > 0 AND avg_duration_minutes < 200
-        USING SAMPLE 5000
+        WHERE avg_distance > 0 
+          AND avg_duration_minutes > 0 
+        LIMIT 5000
     """)
     if df_scatter is not None:
         scatter = alt.Chart(df_scatter).mark_circle(size=60).encode(
-            x=alt.X("Quãng đường (Miles):Q"),
-            y=alt.Y("Thời gian (Phút):Q", axis=alt.Axis(format=",.0f")),
+            x=alt.X("Quãng đường (KM):Q", scale=alt.Scale(zero=True)),
+            y=alt.Y("Thời gian (Phút):Q", axis=alt.Axis(format=",.0f"), scale=alt.Scale(zero=True)),
             color="Phân loại:N",
-            tooltip=[alt.Tooltip("Quãng đường (Miles)"), alt.Tooltip("Thời gian (Phút)", format=",.0f"), alt.Tooltip("Phân loại")]
+            tooltip=[alt.Tooltip("Quãng đường (KM)", format=".1f"), alt.Tooltip("Thời gian (Phút)", format=",.0f"), alt.Tooltip("Phân loại")]
         ).properties(height=400).interactive()
         st.altair_chart(scatter, use_container_width=True)
     
 with col_b:
     st.subheader("Tốc độ TB theo Phân loại Quãng đường")
-    st.caption("(Đơn vị: MPH)")
+    st.caption("(Đơn vị: KM/H)")
     df_speed = execute_query("""
         SELECT 
-            distance_category as "Phân loại", 
-            AVG(avg_speed_mph) as "Tốc độ TB (MPH)"
+            CASE 
+                WHEN avg_distance < 2 THEN 'Ngắn (< 3.2 km)'
+                WHEN avg_distance BETWEEN 2 AND 5 THEN 'Trung bình (3.2-8 km)'
+                ELSE 'Dài (> 8 km)'
+            END as "Phân loại",
+            AVG(avg_speed_mph * 1.609) as "Tốc độ TB (KM/H)"
         FROM mart_traffic_efficiency
-        WHERE avg_distance > 0 AND avg_duration_minutes > 0
+        WHERE avg_distance > 0 
+          AND avg_duration_minutes > 0
         GROUP BY 1
     """)
     if df_speed is not None:
         speed_chart = alt.Chart(df_speed).mark_bar(color="#90be6d").encode(
-            x=alt.X("Phân loại:N"),
-            y=alt.Y("Tốc độ TB (MPH):Q", axis=alt.Axis(format=".1f")),
-            tooltip=[alt.Tooltip("Phân loại"), alt.Tooltip("Tốc độ TB (MPH)", format=".1f")]
+            x=alt.X("Phân loại:N", sort=['Ngắn (< 3.2 km)', 'Trung bình (3.2-8 km)', 'Dài (> 8 km)']),
+            y=alt.Y("Tốc độ TB (KM/H):Q", axis=alt.Axis(format=".1f")),
+            tooltip=[alt.Tooltip("Phân loại"), alt.Tooltip("Tốc độ TB (KM/H)", format=".1f")]
         ).properties(height=400)
         st.altair_chart(speed_chart, use_container_width=True)
 

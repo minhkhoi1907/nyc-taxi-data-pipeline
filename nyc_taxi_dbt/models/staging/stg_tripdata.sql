@@ -57,10 +57,13 @@ renamed AS (
         pickup_datetime < dropoff_datetime
         AND (tpep_pickup_datetime IS NOT NULL)
         AND passenger_count > 0 
-        AND trip_distance >= 0
-        AND fare_amount >= 0
+        AND trip_distance > 0 -- Phải di chuyển mới tính
+        AND fare_amount > 0 -- Phải có phí mới tính
+        AND (total_amount > 0)
         AND (pickup_location_id IS NULL OR pickup_location_id BETWEEN 1 AND 265)
         AND (dropoff_location_id IS NULL OR dropoff_location_id BETWEEN 1 AND 265)
+        -- Lọc tốc độ phi thực tế (Ví dụ: đứng yên < 5 MPH hoặc quá nhanh > 100 MPH)
+        AND (trip_distance / (NULLIF(DATE_DIFF('second', pickup_datetime, dropoff_datetime), 0) / 3600.0)) BETWEEN 5 AND 100
 )
 
 SELECT
