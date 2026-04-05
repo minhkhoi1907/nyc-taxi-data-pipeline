@@ -20,7 +20,7 @@ st.markdown("""
 st.title("🚖 NYC Taxi Business Intelligence Dashboard")
 
 # --- SECTION 1: EXECUTIVE OVERVIEW ---
-st.header("📈 Tổng kết")
+st.header(" Tổng kết")
 
 df_kpis = execute_query("""
     SELECT 
@@ -88,18 +88,8 @@ with c2:
 
 st.divider()
 
-st.header("🗺️ Bản đồ Mật độ Chuyến đi theo Đường phố New York")
+# Legend will be moved inside tabs
 
-# UI CHÚ THÍCH BẢN ĐỒ (LEGEND) - DÙNG GRADIENT ĐỂ THỂ HIỆN "CÀNG ĐẬM CÀNG ĐÔNG"
-st.markdown("""<div style="display: flex; align-items: center; margin-bottom: 20px; padding: 12px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-<span style="font-weight: bold; margin-right: 15px; color: #333; font-size: 1em;">Mật độ chuyến đi:</span>
-<div style="background: linear-gradient(to right, rgb(200,240,200), rgb(40,160,40)); width: 60px; height: 18px; border-radius: 4px; margin-right: 8px; border: 1px solid #ccc;"></div>
-<span style="margin-right: 25px; color: #555; font-size: 0.9em;">Vắng khách</span>
-<div style="background: linear-gradient(to right, rgb(255,240,150), rgb(240,130,0)); width: 60px; height: 18px; border-radius: 4px; margin-right: 8px; border: 1px solid #ccc;"></div>
-<span style="margin-right: 25px; color: #555; font-size: 0.9em;">Trung bình</span>
-<div style="background: linear-gradient(to right, rgb(230,80,80), rgb(130,0,0)); width: 60px; height: 18px; border-radius: 4px; margin-right: 8px; border: 1px solid #ccc;"></div>
-<span style="color: #555; font-weight: bold; font-size: 0.9em;">Đông khách</span>
-</div>""", unsafe_allow_html=True)
 
 @st.cache_data
 def get_geojson_with_data(df_trips, mode="trips"):
@@ -157,15 +147,9 @@ def get_geojson_with_data(df_trips, mode="trips"):
         
     return geojson, label
 
-col_m1, col_m2 = st.columns([1, 2])
-with col_m1:
-    map_mode = st.radio(
-        "Lựa chọn hiển thị bản đồ:",
-        ["Mật độ chuyến đi", "Tỷ lệ Tip trung bình (%)"],
-        index=0,
-        help="Chuyển đổi giữa việc xem số lượng khách và mức độ hào phóng (%) của từng khu vực."
-    )
-    mode_code = "trips" if map_mode == "Mật độ chuyến đi" else "tips"
+st.header("Mật độ Chuyến đi và Tỷ lệ Tip")
+
+tab_map1, tab_map2 = st.tabs(["Mật độ Chuyến đi", "Tỷ lệ Tip trung bình"])
 
 df_zones_all = execute_query(f"""
     SELECT 
@@ -176,100 +160,67 @@ df_zones_all = execute_query(f"""
     GROUP BY 1
 """)
 
-if df_zones_all is not None and not df_zones_all.empty:
-    with st.spinner("Đang xử lý biểu đồ nhiệt không gian..."):
-        geojson_data, val_label = get_geojson_with_data(df_zones_all, mode=mode_code)
-        if geojson_data:
-            layer = pdk.Layer(
-                "GeoJsonLayer",
-                geojson_data,
-                pickable=True,
-                stroked=True,
-                filled=True,
-                get_fill_color="properties.fill_color",
-                get_line_color=[255, 255, 255, 180], 
-                line_width_min_pixels=1
-            )
-            
-            view_state = pdk.ViewState(
-                longitude=-73.96,
-                latitude=40.75,
-                zoom=10, 
-                pitch=0,
-            )
-            
-            r = pdk.Deck(
-                layers=[layer], 
-                initial_view_state=view_state, 
-                map_style="road", 
-                tooltip={
-                    "html": f"<b>Khu vực:</b> {{zone}}<br/><b>{val_label}:</b> {{formatted_val}}",
-                    "style": {"backgroundColor": "#2C3E50", "color": "white", "font-family": "sans-serif"}
-                }
-            )
-            st.pydeck_chart(r)
-        else:
-            st.error("Không tìm thấy file taxi_zones.geojson")
+def display_map(df, mode):
+    if df is not None and not df.empty:
+        with st.spinner(f"Đang xử lý bản đồ {mode}..."):
+            geojson_data, val_label = get_geojson_with_data(df, mode=mode)
+            if geojson_data:
+                # Legend chuyên biệt cho từng mode
+                label_text = "Mật độ khách:" if mode == "trips" else "Mức độ hào phóng:"
+                low_label = "Vắng khách" if mode == "trips" else "Tip thấp"
+                high_label = "Đông khách" if mode == "trips" else "Tip cao"
+                
+                st.markdown(f"""<div style="display: flex; align-items: center; margin-bottom: 20px; padding: 10px; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eee;">
+                <span style="font-weight: bold; margin-right: 15px; color: #333;">{label_text}</span>
+                <div style="background: linear-gradient(to right, rgb(200,240,200), rgb(40,160,40)); width: 50px; height: 15px; border-radius: 3px; margin-right: 5px;"></div>
+                <span style="margin-right: 20px; color: #666; font-size: 0.85em;">{low_label}</span>
+                <div style="background: linear-gradient(to right, rgb(255,240,150), rgb(240,130,0)); width: 50px; height: 15px; border-radius: 3px; margin-right: 5px;"></div>
+                <span style="margin-right: 20px; color: #666; font-size: 0.85em;">Trung bình</span>
+                <div style="background: linear-gradient(to right, rgb(230,80,80), rgb(130,0,0)); width: 50px; height: 15px; border-radius: 3px; margin-right: 5px;"></div>
+                <span style="color: #666; font-size: 0.85em;">{high_label}</span>
+                </div>""", unsafe_allow_html=True)
+
+                layer = pdk.Layer(
+                    "GeoJsonLayer",
+                    geojson_data,
+                    pickable=True,
+                    stroked=True,
+                    filled=True,
+                    get_fill_color="properties.fill_color",
+                    get_line_color=[255, 255, 255, 180], 
+                    line_width_min_pixels=1
+                )
+                
+                view_state = pdk.ViewState(
+                    longitude=-73.96,
+                    latitude=40.75,
+                    zoom=10, 
+                    pitch=0,
+                )
+                
+                r = pdk.Deck(
+                    layers=[layer], 
+                    initial_view_state=view_state, 
+                    map_style="road", 
+                    tooltip={
+                        "html": f"<b>Khu vực:</b> {{zone}}<br/><b>{val_label}:</b> {{formatted_val}}",
+                        "style": {"backgroundColor": "#2C3E50", "color": "white", "font-family": "sans-serif"}
+                    }
+                )
+                st.pydeck_chart(r)
+            else:
+                st.error("Không tìm thấy file taxi_zones.geojson")
+
+with tab_map1:
+    display_map(df_zones_all, mode="trips")
+
+with tab_map2:
+    display_map(df_zones_all, mode="tips")
+
 
 st.divider()
-
-# --- SECTION 2: OPERATIONAL EFFICIENCY ---
-st.header("🚗 Hiệu quả Vận hành & Logistics")
-col_a, col_b = st.columns(2)
-
-with col_a:
-    st.subheader("Tương quan Quãng đường vs Thời gian")
-    df_scatter = execute_query("""
-        SELECT 
-            avg_distance * 1.609 as "Quãng đường (KM)", 
-            avg_duration_minutes as "Thời gian (Phút)", 
-            CASE 
-                WHEN avg_distance < 2 THEN 'Ngắn (< 3.2 km)'
-                WHEN avg_distance BETWEEN 2 AND 5 THEN 'Trung bình (3.2-8 km)'
-                ELSE 'Dài (> 8 km)'
-            END as "Phân loại"
-        FROM mart_traffic_efficiency
-        WHERE avg_distance > 0 
-          AND avg_duration_minutes > 0 
-        LIMIT 5000
-    """)
-    if df_scatter is not None:
-        scatter = alt.Chart(df_scatter).mark_circle(size=60).encode(
-            x=alt.X("Quãng đường (KM):Q", scale=alt.Scale(zero=True)),
-            y=alt.Y("Thời gian (Phút):Q", axis=alt.Axis(format=",.0f"), scale=alt.Scale(zero=True)),
-            color="Phân loại:N",
-            tooltip=[alt.Tooltip("Quãng đường (KM)", format=".1f"), alt.Tooltip("Thời gian (Phút)", format=",.0f"), alt.Tooltip("Phân loại")]
-        ).properties(height=400).interactive()
-        st.altair_chart(scatter, use_container_width=True)
-    
-with col_b:
-    st.subheader("Tốc độ TB theo Phân loại Quãng đường")
-    st.caption("(Đơn vị: KM/H)")
-    df_speed = execute_query("""
-        SELECT 
-            CASE 
-                WHEN avg_distance < 2 THEN 'Ngắn (< 3.2 km)'
-                WHEN avg_distance BETWEEN 2 AND 5 THEN 'Trung bình (3.2-8 km)'
-                ELSE 'Dài (> 8 km)'
-            END as "Phân loại",
-            AVG(avg_speed_mph * 1.609) as "Tốc độ TB (KM/H)"
-        FROM mart_traffic_efficiency
-        WHERE avg_distance > 0 
-          AND avg_duration_minutes > 0
-        GROUP BY 1
-    """)
-    if df_speed is not None:
-        speed_chart = alt.Chart(df_speed).mark_bar(color="#90be6d").encode(
-            x=alt.X("Phân loại:N", sort=['Ngắn (< 3.2 km)', 'Trung bình (3.2-8 km)', 'Dài (> 8 km)']),
-            y=alt.Y("Tốc độ TB (KM/H):Q", axis=alt.Axis(format=".1f")),
-            tooltip=[alt.Tooltip("Phân loại"), alt.Tooltip("Tốc độ TB (KM/H)", format=".1f")]
-        ).properties(height=400)
-        st.altair_chart(speed_chart, use_container_width=True)
-
-st.divider()
-
-# --- SECTION 3: CUSTOMER BEHAVIOR ---
-st.header("👥 Hành vi & Phân khúc Khách hàng")
+# --- SECTION 2: CUSTOMER BEHAVIOR ---
+st.header("Nhu cầu khách hàng")
 col_x, col_y = st.columns(2)
 
 with col_x:
@@ -326,15 +277,12 @@ with col_y:
 
 st.divider()
 
-# --- SECTION 4: STRATEGIC INSIGHTS (WOW FACTOR) ---
-st.header("💡 Phân tích Chiến lược & Tối ưu Lợi nhuận")
-st.info("Phần này cung cấp các thông tin chuyên sâu giúp tối ưu hóa ca trực và nhận diện cơ hội kinh doanh.")
-
+# --- SECTION 3: STRATEGIC INSIGHTS (WOW FACTOR) ---
+st.header("Doanh thu trung bình theo thời gian và nhà cung cấp")
 tab_inv1, tab_inv2 = st.columns(2)
 
 with tab_inv1:
-    st.subheader("⏰ Khoảng thời gian Vàng (Revenue/Trip)")
-    st.caption("Khung giờ có doanh thu trung bình trên mỗi chuyến cao nhất")
+    st.caption("Doanh thu trung bình theo giờ")
     df_golden = execute_query("""
         SELECT 
             hour as "Giờ",
@@ -358,27 +306,8 @@ with tab_inv1:
             tooltip=["Giờ", alt.Tooltip("Doanh thu/Chuyến", format=".2f")]
         ).properties(height=350)
         st.altair_chart(golden_chart, use_container_width=True)
-
 with tab_inv2:
-    st.subheader("🏎️ Top 5 Tuyến đường Ùn tắc nhất")
-    st.caption("Các lộ trình có tốc độ trung bình thấp nhất (MPH)")
-    df_congestion = execute_query("""
-        SELECT 
-            pickup_zone || ' ➔ ' || dropoff_zone as "Lộ trình",
-            AVG(avg_speed_mph) as "Tốc độ (MPH)",
-            SUM(total_trips) as "Số chuyến"
-        FROM mart_traffic_efficiency
-        WHERE avg_speed_mph > 0 AND total_trips > 100
-        GROUP BY 1
-        ORDER BY 2 ASC
-        LIMIT 5
-    """)
-    if df_congestion is not None:
-        st.dataframe(df_congestion, hide_index=True, use_container_width=True)
-
-col_v1, col_v2 = st.columns([1, 2])
-with col_v1:
-    st.subheader("🏦 Thị phần nhà cung cấp")
+    st.subheader(" Thị phần nhà cung cấp")
     df_vendor = execute_query("""
         SELECT 
             CASE WHEN vendor_id = 1 THEN 'Creative Mobile' ELSE 'Verifone' END as "Hãng",
@@ -391,25 +320,5 @@ with col_v1:
             theta=alt.Theta(field="Chuyến đi", type="quantitative"),
             color=alt.Color(field="Hãng", type="nominal", scale=alt.Scale(range=['#1f77b4', '#ff7f0e'])),
             tooltip=["Hãng", alt.Tooltip("Chuyến đi", format=",")]
-        ).properties(height=300)
+        ).properties(height=350)
         st.altair_chart(pie, use_container_width=True)
-
-with col_v2:
-    st.subheader("💰 Phân tích Tip: Thẻ vs Tiền mặt")
-    df_tip_pay = execute_query("""
-        SELECT 
-            payment_name as "Thanh toán",
-            AVG(tip_percentage) * 100 as "Tỷ lệ Tip (%)"
-        FROM mart_revenue_analysis
-        WHERE payment_name IN ('Credit card', 'Cash')
-        GROUP BY 1
-    """)
-    if df_tip_pay is not None:
-        tip_pay_chart = alt.Chart(df_tip_pay).mark_bar().encode(
-            x=alt.X("Thanh toán:N", axis=alt.Axis(labelAngle=0)),
-            y=alt.Y("Tỷ lệ Tip (%):Q"),
-            color=alt.Color("Thanh toán:N", legend=None),
-            tooltip=["Thanh toán", alt.Tooltip("Tỷ lệ Tip (%)", format=".2f")]
-        ).properties(height=300)
-        st.altair_chart(tip_pay_chart, use_container_width=True)
-        st.caption("💡 Tip trên dữ liệu TLC chủ yếu được ghi nhận qua Thẻ tín dụng.")

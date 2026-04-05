@@ -16,3 +16,6 @@ __pycache__/
 *.pyc
 .DS_Store
 logs/
+duckdb_temp/
+taxi_zones_shape/
+
