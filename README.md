@@ -60,20 +60,32 @@ Combine high-performance mapping with business metrics:
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.9+
-- PowerShell (for running automation scripts)
+### 📋 Prerequisites
+To run the Data Engineering pipeline (especially HDFS and Spark), you need to have the following installed on your machine:
 
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/minhkhoi1907/nyc-taxi-data-pipeline.git
-   cd nyc-taxi-data-pipeline
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1.  **Python 3.9 - 3.11:** (Avoid 3.12+ for now as some dbt-duckdb or PySpark libraries might have compatibility issues).
+2.  **Java JDK 11 or 17:** (Required for PySpark). Make sure to set your `JAVA_HOME` environment variable.
+3.  **Docker Desktop:** (Required to run the `namenode` and `spark-master` containers).
+4.  **PowerShell:** (For running the automation scripts).
+
+### 🛠️ Installation
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/minhkhoi1907/nyc-taxi-data-pipeline.git
+    cd nyc-taxi-data-pipeline
+    ```
+2.  Install Python dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+> [!TIP]
+> If you get errors installing `pyspark` on Windows, ensure your Java (JDK 11/17) is installed and your `JAVA_HOME` environment variable is pointing to the JDK folder.
+
+3.  (Optional) Start the infrastructure:
+    ```bash
+    docker-compose up -d
+    ```
 
 ### Running the Pipeline
 - **Initial Batch Load:**
