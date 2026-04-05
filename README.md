@@ -6,7 +6,8 @@ This project implements a complete end-to-end Data Engineering pipeline and Busi
 ## 🏗️ Architecture & ETL Process
 The pipeline follows a modern **ELT (Extract, Load, Transform)** architecture. Below is the conceptual flow of data from raw records to actionable insights:
 
-![NYC Taxi ETL Pipeline Infographic](assets/etl_infographic.png)
+![NYC Taxi ETL Pipeline](assets/etl_diagram.png)
+
 
 ## 📊 Dashboard Preview
 The interactive BI dashboard provides a 360-degree view of the taxi operations:
