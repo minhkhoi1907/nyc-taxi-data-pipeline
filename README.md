@@ -6,25 +6,22 @@ This project implements a complete end-to-end Data Engineering pipeline and Busi
 ## 🏗️ Architecture & ETL Process
 The pipeline follows a modern **ELT (Extract, Load, Transform)** architecture. Below is the conceptual flow of data from raw records to actionable insights:
 
-```mermaid
-sequenceDiagram
-    participant S as Source (NYC TLC Parquet)
-    participant P as Pipeline (Python/DuckDB)
-    participant D as Warehouse (DuckDB)
-    participant dbt as Transform (dbt-core)
-    participant V as Dashboard (Streamlit)
-
-    S->>P: Read Parquet Files
-    P->>D: Load Raw Tables
-    dbt->>D: Run Models (Staging/Marts)
-    D->>dbt: Quality Assurance (Tests)
-    V->>D: SQL Queries (Olap Engine)
-    D->>V: Processed Data
-```
+![NYC Taxi ETL Pipeline Infographic](assets/etl_infographic.png)
 
 ## 📊 Dashboard Preview
-![Executive Overview Dashboard](assets/dashboard_overview.png)
-![Spatial Analysis Heatmap](assets/dashboard_map.png)
+The interactive BI dashboard provides a 360-degree view of the taxi operations:
+
+### 1. Executive Overview & Trends
+![Executive Overview](assets/dashboard_overview.png)
+
+### 2. Spatial Analysis (Trip Density & Tips)
+Combine high-performance mapping with business metrics:
+![Spatial Analysis - Trips](assets/dashboard_map_trips.png)
+![Spatial Analysis - Tips](assets/dashboard_map_tips.png)
+
+### 3. Customer Behavior & Strategic Insights
+![Customer Behavior](assets/dashboard_behavior.png)
+![Strategic Insights](assets/dashboard_insights.png)
 
 ## 🏗️ Technical Details
 - **Storage/Compute:** [DuckDB](https://duckdb.org/) serves as the lightning-fast OLAP engine.
