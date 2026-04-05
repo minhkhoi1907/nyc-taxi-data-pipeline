@@ -8,6 +8,19 @@ The pipeline follows a modern **ELT (Extract, Load, Transform)** architecture. B
 
 ![NYC Taxi ETL Pipeline](assets/etl_diagram.png)
 
+## 📁 Project Structure
+```plaintext
+├── app/                  # Streamlit BI Dashboard & GeoJSON assets
+├── assets/               # Project visuals & architecture diagrams
+├── data/                 # Local data storage & DuckDB database
+├── nyc_taxi_dbt/         # dbt project (Models, Macros, Tests)
+│   ├── models/staging/   # Data cleaning & standardization
+│   └── models/marts/     # Business-ready aggregated tables
+├── scripts/              # Python & PowerShell automation scripts
+├── docker-compose.yml    # Infrastructure (HDFS, Spark, etc.)
+├── README.md             # Project documentation
+└── requirements.txt      # Python dependencies
+```
 
 ## 📊 Dashboard Preview
 The interactive BI dashboard provides a 360-degree view of the taxi operations:
@@ -23,6 +36,20 @@ Combine high-performance mapping with business metrics:
 ### 3. Customer Behavior & Strategic Insights
 ![Customer Behavior](assets/dashboard_behavior.png)
 ![Strategic Insights](assets/dashboard_insights.png)
+
+## 🧮 Data Modeling Layers
+- **Staging Layer:** Standardizes schema and cleanses raw Parquet data (e.g., filtering out invalid coordinates or zero-passenger trips).
+- **Mart Layer:** Creates multi-dimensional tables optimized for visualization (Revenue Analysis, Trip Demand, Customer Segments).
+
+## 🚰 Data Source
+- **Official Data:** [NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
+- **Ingestion:** Automated via `scripts/extract_data.py`. The script fetches Parquet files from CloudFront and can optionally upload them to HDFS for distributed processing.
+
+## 🔮 Future Roadmap (To-Do)
+- [ ] **Advanced Orchestration:** Implement Apache Airflow or Prefect to replace PowerShell scripting.
+- [ ] **Full Containerization:** Dockerize the entire stack (Dashboard + Pipeline) for easy deployment.
+- [ ] **Cloud Migration:** Move data storage to AWS S3 and computation to Snowflake/GCP BigQuery.
+- [ ] **CI/CD:** Integrate GitHub Actions for automated dbt testing and dashboard deployment.
 
 ## 🏗️ Technical Details
 - **Storage/Compute:** [DuckDB](https://duckdb.org/) serves as the lightning-fast OLAP engine.
