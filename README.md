@@ -3,9 +3,32 @@
 ## Project Overview
 This project implements a complete end-to-end Data Engineering pipeline and Business Intelligence dashboard for the New York City Taxi & Limousine Commission (TLC) dataset. It processes millions of trip records to provide actionable insights into urban mobility, revenue trends, and customer behavior.
 
-## 🏗️ Architecture
-The pipeline follows a modern **ELT (Extract, Load, Transform)** architecture:
+## 🏗️ Architecture & ETL Process
+The pipeline follows a modern **ELT (Extract, Load, Transform)** architecture. Below is the conceptual flow of data from raw records to actionable insights:
+
+```mermaid
+sequenceDiagram
+    participant S as Source (NYC TLC Parquet)
+    participant P as Pipeline (Python/DuckDB)
+    participant D as Warehouse (DuckDB)
+    participant dbt as Transform (dbt-core)
+    participant V as Dashboard (Streamlit)
+
+    S->>P: Read Parquet Files
+    P->>D: Load Raw Tables
+    dbt->>D: Run Models (Staging/Marts)
+    D->>dbt: Quality Assurance (Tests)
+    V->>D: SQL Queries (Olap Engine)
+    D->>V: Processed Data
+```
+
+## 📊 Dashboard Preview
+![Executive Overview Dashboard](assets/dashboard_overview.png)
+![Spatial Analysis Heatmap](assets/dashboard_map.png)
+
+## 🏗️ Technical Details
 - **Storage/Compute:** [DuckDB](https://duckdb.org/) serves as the lightning-fast OLAP engine.
+
 - **Transformation:** [dbt (data build tool)](https://www.getdbt.com/) handles data modeling and quality control.
 - **Visualization:** [Streamlit](https://streamlit.io/) provides an interactive, real-time BI dashboard.
 - **Maps:** [PyDeck](https://deckgl.github.io/pydeck/) with GeoJSON for high-performance spatial visualizations.
